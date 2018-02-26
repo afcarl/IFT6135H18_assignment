@@ -3,7 +3,7 @@
 """
 Created on Mon Jan 15 13:31:59 2018
 
-@author: chinwei
+@author: shawntan
 """
 
 import urllib
@@ -13,7 +13,9 @@ import os
 import numpy as np
 import zipfile
 import scipy.ndimage
-
+import glob
+import warnings
+warnings.filterwarnings("ignore")
 
 final_size = 64
 
@@ -39,36 +41,39 @@ if __name__ == '__main__':
     zip_ref.extractall(args.savedir)
     zip_ref.close()
 
-    train_data = os.path.join(args.savedir, 'train')
+    train_file_list = glob.glob(os.path.join(
+        args.savedir,
+        'PetImages',
+        '*', '*.jpg'))
     train_proc_data = os.path.join(args.savedir, 'train_64x64')
     if not os.path.exists(train_proc_data):
         os.makedirs(train_proc_data)
 
-    for pic_file in os.listdir(train_data):
-        pic_path = os.path.join(train_data, pic_file)
-        img = scipy.ndimage.imread(pic_path)
-        side_dim = min(img.shape[0], img.shape[1])
-        start_height = (img.shape[0] - side_dim) // 2
-        start_width = (img.shape[1] - side_dim) // 2
-        img = img[start_height: start_height + side_dim,
-                  start_width: start_width + side_dim]
-        img = scipy.misc.imresize(
-            img,
-            size=(final_size, final_size),
-            interp='bilinear'
-        )
+    print "Some files may not open. This is fine."
 
+    for in_pic_path in train_file_list:
+        filename = \
+            '.'.join(os.path.normpath(in_pic_path).split(os.path.sep)[-2:])
+        out_pic_path = os.path.join(train_proc_data, filename)
+        try:
+            img = scipy.ndimage.imread(in_pic_path)
+            side_dim = min(img.shape[0], img.shape[1])
+            start_height = (img.shape[0] - side_dim) // 2
+            start_width = (img.shape[1] - side_dim) // 2
 
-        #if (img.shape[0] > final_size or
-        #    img.shape[1] > final_size):
-        #    img = img[:final_size, :final_size]
-        assert(img.shape[0] == final_size and
-               img.shape[1] == final_size)
+            img = img[start_height: start_height + side_dim,
+                      start_width: start_width + side_dim]
 
+            img = scipy.misc.imresize(
+                img,
+                size=(final_size, final_size),
+                interp='bilinear'
+            )
+            if len(img.shape) == 3 and img.shape[2] > 3:
+                img = img[:, :, 3]
 
-
-        scipy.misc.imsave(
-            os.path.join(train_proc_data, pic_file),
-            img
-        )
-
+            assert(img.shape[0] == final_size and
+                   img.shape[1] == final_size)
+            scipy.misc.imsave(out_pic_path, img)
+        except IOError:
+            print "Could not open", out_pic_path
