@@ -36,12 +36,12 @@ if __name__ == '__main__':
     filename  = 'train.zip'
     filepath = os.path.join(args.savedir, filename)
     print "Downloading..."
-    #urllib.urlretrieve(urlpath, filepath)
+    urllib.urlretrieve(urlpath, filepath)
 
     print "Extracting file..."
-    #zip_ref = zipfile.ZipFile(filepath, 'r')
-    #zip_ref.extractall(args.savedir)
-    #zip_ref.close()
+    zip_ref = zipfile.ZipFile(filepath, 'r')
+    zip_ref.extractall(args.savedir)
+    zip_ref.close()
 
     train_file_list = glob.glob(os.path.join(
         args.savedir,
